@@ -148,6 +148,78 @@ def parsear_instruccion(texto):
         }
 
 
+def validar_inmediato_12(inmediato):
+    if inmediato < -2048 or inmediato > 2047:
+        raise ValueError(
+            f"Inmediato fuera de rango: {inmediato}. "
+            "Debe estar entre -2048 y 2047"
+        )
+
+
+def codificar_r(instruccion):
+    datos = INSTRUCCIONES[instruccion["mnemonico"]]
+
+    funct7 = datos["funct7"]
+    funct3 = datos["funct3"]
+    opcode = datos["opcode"]
+
+    rd = instruccion["rd"]
+    rs1 = instruccion["rs1"]
+    rs2 = instruccion["rs2"]
+
+    codigo = (
+        (funct7 << 25)
+        | (rs2 << 20)
+        | (rs1 << 15)
+        | (funct3 << 12)
+        | (rd << 7)
+        | opcode
+    )
+
+    return codigo
+
+
+def codificar_i(instruccion):
+    datos = INSTRUCCIONES[instruccion["mnemonico"]]
+
+    funct3 = datos["funct3"]
+    opcode = datos["opcode"]
+
+    rd = instruccion["rd"]
+    rs1 = instruccion["rs1"]
+    inmediato = instruccion["inmediato"]
+
+    validar_inmediato_12(inmediato)
+
+    # Se conservan únicamente los 12 bits del inmediato.
+    # Esto permite representar correctamente números negativos
+    # en complemento a dos.
+    inmediato_12 = inmediato & 0xFFF
+
+    codigo = (
+        (inmediato_12 << 20)
+        | (rs1 << 15)
+        | (funct3 << 12)
+        | (rd << 7)
+        | opcode
+    )
+
+    return codigo
+
+
+def codificar_instruccion(instruccion):
+    formato = instruccion["formato"]
+
+    if formato == "R":
+        return codificar_r(instruccion)
+
+    if formato == "I":
+        return codificar_i(instruccion)
+
+    raise ValueError(
+        f"La codificación del formato {formato} todavía no está implementada"
+    )
+
 def main():
     if len(sys.argv) != 2:
         print('Uso: ./run.sh "<instruccion>"')
@@ -156,9 +228,16 @@ def main():
     try:
         instruccion = parsear_instruccion(sys.argv[1])
 
+        codigo = codificar_instruccion(instruccion)
+
+        binario = f"{codigo:032b}"
+        hexadecimal = f"0x{codigo:08X}"
+
         print(f"Instrucción: {instruccion['mnemonico']}")
         print(f"Formato: {instruccion['formato']}")
-        print(f"Operandos: {instruccion}")
+        
+        print(f"Binario: {binario}")
+        print(f"HEX: {hexadecimal}")
 
     except ValueError as error:
         print(f"Error: {error}")
