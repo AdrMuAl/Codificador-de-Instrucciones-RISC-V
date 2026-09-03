@@ -206,6 +206,78 @@ def codificar_i(instruccion):
 
     return codigo
 
+def codificar_s(instruccion):
+    datos = INSTRUCCIONES[instruccion["mnemonico"]]
+
+    funct3 = datos["funct3"]
+    opcode = datos["opcode"]
+
+    rs1 = instruccion["rs1"]
+    rs2 = instruccion["rs2"]
+    inmediato = instruccion["inmediato"]
+
+    validar_inmediato_12(inmediato)
+
+    inmediato_12 = inmediato & 0xFFF
+
+    inmediato_bajo = inmediato_12 & 0x1F
+    inmediato_alto = (inmediato_12 >> 5) & 0x7F
+
+    codigo = (
+        (inmediato_alto << 25)
+        | (rs2 << 20)
+        | (rs1 << 15)
+        | (funct3 << 12)
+        | (inmediato_bajo << 7)
+        | opcode
+    )
+
+    return codigo
+
+def validar_inmediato_b(inmediato):
+    if inmediato < -4096 or inmediato > 4094:
+        raise ValueError(
+            f"Desplazamiento fuera de rango: {inmediato}. "
+            "Debe estar entre -4096 y 4094"
+        )
+
+    if inmediato % 2 != 0:
+        raise ValueError(
+            f"Desplazamiento inválido: {inmediato}. "
+            "Debe ser múltiplo de 2"
+        )
+
+def codificar_b(instruccion):
+    datos = INSTRUCCIONES[instruccion["mnemonico"]]
+
+    funct3 = datos["funct3"]
+    opcode = datos["opcode"]
+
+    rs1 = instruccion["rs1"]
+    rs2 = instruccion["rs2"]
+    inmediato = instruccion["inmediato"]
+
+    validar_inmediato_b(inmediato)
+
+    inmediato_13 = inmediato & 0x1FFF
+
+    bit_12 = (inmediato_13 >> 12) & 0x1
+    bits_10_5 = (inmediato_13 >> 5) & 0x3F
+    bits_4_1 = (inmediato_13 >> 1) & 0xF
+    bit_11 = (inmediato_13 >> 11) & 0x1
+
+    codigo = (
+        (bit_12 << 31)
+        | (bits_10_5 << 25)
+        | (rs2 << 20)
+        | (rs1 << 15)
+        | (funct3 << 12)
+        | (bits_4_1 << 8)
+        | (bit_11 << 7)
+        | opcode
+    )
+
+    return codigo
 
 def codificar_instruccion(instruccion):
     formato = instruccion["formato"]
@@ -216,9 +288,13 @@ def codificar_instruccion(instruccion):
     if formato == "I":
         return codificar_i(instruccion)
 
-    raise ValueError(
-        f"La codificación del formato {formato} todavía no está implementada"
-    )
+    if formato == "S":
+        return codificar_s(instruccion)
+
+    if formato == "B":
+        return codificar_b(instruccion)
+
+    raise ValueError(f"Formato no soportado: {formato}")
 
 def main():
     if len(sys.argv) != 2:
