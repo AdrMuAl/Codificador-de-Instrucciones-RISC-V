@@ -1,0 +1,62 @@
+# Casos propios para validación contra toolchain RV32I
+# Formato: instruccion ; tipo de caso
+
+# add
+add x5, x6, x7 ; normal
+add x0, x1, x2 ; registro x0
+add x31, x31, x0 ; registro limite
+
+# sub
+sub x8, x9, x10 ; normal
+sub x0, x31, x1 ; registro x0
+sub x31, x0, x31 ; registro limite
+
+# and
+and x3, x4, x5 ; normal
+and x0, x15, x31 ; registro x0
+and x31, x31, x31 ; registro limite
+
+# or
+or x6, x7, x8 ; normal
+or x0, x0, x31 ; registro x0
+or x31, x1, x0 ; registro limite
+
+# addi
+addi x5, x6, 123 ; positivo
+addi x10, x11, -321 ; negativo
+addi x31, x0, 2047 ; limite
+
+# andi
+andi x7, x8, 255 ; positivo
+andi x9, x10, -1 ; negativo
+andi x0, x31, -2048 ; limite
+
+# lw
+lw x5, 64(x6) ; positivo
+lw x10, -128(x11) ; negativo
+lw x31, 2047(x0) ; limite
+
+# lb
+lb x2, 127(x3) ; positivo
+lb x4, -129(x5) ; negativo
+lb x0, -2048(x31) ; limite
+
+# sw
+sw x5, 100(x6) ; positivo
+sw x7, -256(x8) ; negativo
+sw x31, 2047(x0) ; limite
+
+# sb
+sb x9, 31(x10) ; positivo
+sb x11, -33(x12) ; negativo
+sb x0, -2048(x31) ; limite
+
+# beq
+beq x1, x2, 16 ; positivo
+beq x3, x4, -32 ; negativo
+beq x0, x31, 0 ; desplazamiento cero
+
+# bne
+bne x5, x6, 4094 ; limite positivo
+bne x7, x8, -4096 ; limite negativo
+bne x31, x0, 0 ; desplazamiento cero
